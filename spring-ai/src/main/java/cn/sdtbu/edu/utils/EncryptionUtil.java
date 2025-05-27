@@ -3,8 +3,12 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Base64;
 
+/**
+ * @author Wyh
+ */
 public class EncryptionUtil {
-    private static final String SECRET_KEY = "ufjghvjdnfhcjshd"; // 16字节的密钥
+
+    private static final String SECRET_KEY = "ufjghvjdnfhcjshd";
     private static final String ALGORITHM = "AES";
 
     public static String encrypt(String value) throws Exception {

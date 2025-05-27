@@ -13,6 +13,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @author Wyh
+ */
 @CrossOrigin
 @RestController
 @RequestMapping("/user")
@@ -27,6 +30,7 @@ public class UserController {
     public ResponseEntity<Map<String, Object>> register(@RequestBody Map<String, String> request) {
         try {
             User user = userService.register(request.get("email"), request.get("password"));
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "注册成功");
