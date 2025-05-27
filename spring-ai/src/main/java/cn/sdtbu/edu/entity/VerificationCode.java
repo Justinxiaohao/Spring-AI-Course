@@ -1,9 +1,13 @@
 package cn.sdtbu.edu.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.sql.Timestamp;
 
+@Getter
+@Setter
 @TableName("verification_codes")
 public class VerificationCode {
 
@@ -22,45 +26,4 @@ public class VerificationCode {
     @TableField(value = "expires_at")
     private Timestamp expiresAt;
 
-    // Getters and setters
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public Timestamp getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Timestamp createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Timestamp getExpiresAt() {
-        return expiresAt;
-    }
-
-    public void setExpiresAt(Timestamp expiresAt) {
-        this.expiresAt = expiresAt;
-    }
 }

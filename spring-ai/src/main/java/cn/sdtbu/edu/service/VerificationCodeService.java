@@ -13,6 +13,9 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Random;
 
+/**
+ * @author Wyh
+ */
 @Service
 public class VerificationCodeService {
     @Autowired
@@ -41,7 +44,8 @@ public class VerificationCodeService {
         verificationCode.setCode(code);
         verificationCode.setCreatedAt(Timestamp.from(Instant.now()));
         //设置验证码过期时间为5分钟
-        verificationCode.setExpiresAt(Timestamp.from(Instant.now().plusSeconds(300)));        // 保存验证码到数据库
+        verificationCode.setExpiresAt(Timestamp.from(Instant.now().plusSeconds(300)));
+        //保存验证码到数据库
         verificationCodeMapper.insert(verificationCode);
 
         // 发送验证码到用户邮箱
@@ -70,8 +74,8 @@ public class VerificationCodeService {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom("1418661311@qq.com");
         message.setTo(to);
-        message.setSubject("博客登录验证码");
-        message.setText("您的验证码是：" + code + "，有效期为5分钟。请尽快使用。请妥善保管,请勿泄露给他人");
+        message.setSubject("心理治愈电台登录验证码");
+        message.setText("即刻登录,开始电台新体验,您的验证码是：" + code + "，有效期为5分钟。请尽快使用。请妥善保管,请勿泄露给他人");
         mailSender.send(message);
     }
 
@@ -97,7 +101,8 @@ public class VerificationCodeService {
         // 创建新用户并保存
         User user = new User();
         user.setEmail(email);
-        user.setPassword(password); // 可以加密密码后存储
+        // 加密密码后存储
+        user.setPassword(password);
         userMapper.insert(user);
 
         // 注册成功后返回用户对象
