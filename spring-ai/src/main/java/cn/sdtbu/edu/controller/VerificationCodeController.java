@@ -26,7 +26,8 @@ public class VerificationCodeController {
             // 这里可以添加发送验证码到用户邮箱的逻辑
             response.put("success", true);
             response.put("message", "验证码已发送");
-            response.put("data", null);  // 不需要返回数据时可以设置为null
+            // 不需要返回数据时设置为null
+            response.put("data", null);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             response.put("success", false);
@@ -44,7 +45,7 @@ public class VerificationCodeController {
             if (isValid) {
                 response.put("success", true);
                 response.put("message", "验证码验证成功");
-                response.put("data", null);  // 不需要返回数据时可以设置为null
+                response.put("data", null);
                 return ResponseEntity.ok(response);
             } else {
                 response.put("success", false);

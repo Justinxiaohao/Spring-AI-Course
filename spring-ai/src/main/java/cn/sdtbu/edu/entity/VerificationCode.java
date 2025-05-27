@@ -6,6 +6,9 @@ import lombok.Setter;
 
 import java.sql.Timestamp;
 
+/**
+ * @author Wyh
+ */
 @Getter
 @Setter
 @TableName("verification_codes")

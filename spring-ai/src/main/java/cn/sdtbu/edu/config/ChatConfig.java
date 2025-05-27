@@ -9,6 +9,9 @@ import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * @author Wyh
+ */
 @Configuration
 public class ChatConfig {
 
