@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 
+/**
+ * @author Wyh
+ */
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/ai")
@@ -18,6 +21,8 @@ public class ChatController {
 
     @RequestMapping(value = "/chat", produces = "text/html; charset=utf-8")
     public Flux<String> chat(@RequestParam("prompt") String prompt, @RequestParam("chatId") String chatId) {
+        System.out.println("prompt: " + prompt);
+
 
         return chatClient.prompt()
                 .user(prompt)
