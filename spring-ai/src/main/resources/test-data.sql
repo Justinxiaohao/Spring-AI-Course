@@ -1,0 +1,156 @@
+-- 测试数据插入脚本
+-- 注意：这是可选的测试数据，用于验证API功能
+
+-- 插入分类数据
+INSERT INTO categories (name, description) VALUES 
+('冥想音乐', '专注于冥想和放松的音乐节目'),
+('自然声音', '大自然的声音，如雨声、海浪声等'),
+('白噪音', '帮助集中注意力和睡眠的白噪音'),
+('古典音乐', '经典的古典音乐作品'),
+('轻音乐', '轻松愉悦的背景音乐'),
+('睡眠音乐', '专门用于助眠的音乐节目');
+
+-- 插入电台节目数据
+INSERT INTO radio_programs (
+    title, description, audio_url, cover_image_url, category_id, 
+    artist_narrator, album, duration_seconds, tags, publication_date,
+    plays_count, likes_count, comments_count, is_featured, status
+) VALUES 
+(
+    '深度冥想引导', 
+    '一段20分钟的深度冥想引导，帮助您放松身心，释放压力。',
+    'https://example.com/audio/meditation1.mp3',
+    'https://example.com/images/meditation1.jpg',
+    1,
+    '李静心',
+    '冥想系列第一季',
+    1200,
+    '冥想,放松,正念',
+    '2024-01-15',
+    1250,
+    89,
+    23,
+    1,
+    'published'
+),
+(
+    '雨夜森林', 
+    '森林中的雨声，配合鸟鸣和风声，营造宁静的自然氛围。',
+    'https://example.com/audio/rain-forest.mp3',
+    'https://example.com/images/rain-forest.jpg',
+    2,
+    '自然录音师',
+    '自然之声合集',
+    1800,
+    '雨声,森林,自然,放松',
+    '2024-01-10',
+    2100,
+    156,
+    45,
+    1,
+    'published'
+),
+(
+    '专注力白噪音', 
+    '经过科学调制的白噪音，帮助提高工作和学习时的专注力。',
+    'https://example.com/audio/white-noise.mp3',
+    'https://example.com/images/white-noise.jpg',
+    3,
+    '声音工程师',
+    '专注力提升系列',
+    3600,
+    '白噪音,专注,学习,工作',
+    '2024-01-08',
+    3200,
+    201,
+    67,
+    0,
+    'published'
+),
+(
+    '月光奏鸣曲', 
+    '贝多芬的经典作品《月光奏鸣曲》，由著名钢琴家演奏。',
+    'https://example.com/audio/moonlight-sonata.mp3',
+    'https://example.com/images/moonlight-sonata.jpg',
+    4,
+    '王钢琴',
+    '贝多芬作品集',
+    900,
+    '古典,钢琴,贝多芬',
+    '2024-01-12',
+    1800,
+    134,
+    28,
+    1,
+    'published'
+),
+(
+    '海边日落', 
+    '温柔的海浪声配合轻柔的音乐，仿佛置身于海边看日落。',
+    'https://example.com/audio/sunset-beach.mp3',
+    'https://example.com/images/sunset-beach.jpg',
+    5,
+    '海洋音乐组',
+    '海洋之声',
+    1500,
+    '海浪,轻音乐,日落,放松',
+    '2024-01-14',
+    980,
+    72,
+    15,
+    0,
+    'published'
+),
+(
+    '深度睡眠音乐', 
+    '专门设计的睡眠音乐，使用特定频率帮助快速进入深度睡眠。',
+    'https://example.com/audio/deep-sleep.mp3',
+    'https://example.com/images/deep-sleep.jpg',
+    6,
+    '睡眠专家',
+    '睡眠改善计划',
+    2700,
+    '睡眠,深度睡眠,助眠',
+    '2024-01-16',
+    2800,
+    198,
+    52,
+    1,
+    'published'
+),
+(
+    '晨间冥想', 
+    '适合早晨进行的简短冥想练习，帮助开启美好的一天。',
+    'https://example.com/audio/morning-meditation.mp3',
+    'https://example.com/images/morning-meditation.jpg',
+    1,
+    '李静心',
+    '冥想系列第一季',
+    600,
+    '冥想,晨间,正念,能量',
+    '2024-01-18',
+    1100,
+    85,
+    19,
+    0,
+    'published'
+),
+(
+    '山谷溪流', 
+    '清澈的溪流声，配合山谷中的鸟鸣，带来清新的自然体验。',
+    'https://example.com/audio/mountain-stream.mp3',
+    'https://example.com/images/mountain-stream.jpg',
+    2,
+    '自然录音师',
+    '自然之声合集',
+    2100,
+    '溪流,山谷,自然,清新',
+    '2024-01-20',
+    1650,
+    112,
+    31,
+    0,
+    'published'
+);
+
+-- 注意：实际使用时，请将 audio_url 和 cover_image_url 替换为真实的音频和图片链接
