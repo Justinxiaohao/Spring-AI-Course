@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.sql.Timestamp;
 import java.util.Date;
@@ -30,6 +31,9 @@ public class UserService {
 
     @Autowired
     private CommentMapper commentMapper;
+
+    @Autowired
+    private FileUploadService fileUploadService;
 
     public User register(String email, String password) {
 
@@ -443,5 +447,86 @@ public class UserService {
             result.getCurrent(),
             result.getSize()
         );
+    }
+
+    /**
+     * 根据邮箱更新用户个人资料（支持头像上传）
+     * @param email 用户邮箱
+     * @param request 更新请求
+     * @param avatarFile 头像文件（可选）
+     * @return 更新后的用户资料
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public UserProfileDTO updateUserProfileWithAvatarByEmail(String email, UpdateUserProfileRequest request, MultipartFile avatarFile) {
+        // 参数校验
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("邮箱地址不能为空");
+        }
+        if (request == null) {
+            throw new IllegalArgumentException("更新请求不能为空");
+        }
+
+        // 先根据邮箱查找用户
+        User existingUser = userMapper.findByEmail(email);
+        if (existingUser == null) {
+            throw new RuntimeException("邮箱地址不存在");
+        }
+
+        Integer userId = existingUser.getId();
+
+        // 检查用户名是否重复（如果要更新用户名）
+        if (StringUtils.hasText(request.getUsername())) {
+            if (request.getUsername().length() > 50) {
+                throw new IllegalArgumentException("用户名不能超过50个字符");
+            }
+            int usernameExists = userMapper.checkUsernameExists(request.getUsername(), userId);
+            if (usernameExists > 0) {
+                throw new RuntimeException("用户名已存在，请使用其他用户名");
+            }
+        }
+
+        try {
+            // 处理头像上传
+            String newAvatarUrl = null;
+            if (avatarFile != null && !avatarFile.isEmpty()) {
+                // 删除旧头像（如果存在且不是默认头像）
+                String oldAvatarUrl = existingUser.getAvatar();
+                if (oldAvatarUrl != null && !oldAvatarUrl.startsWith("/img/avatar0")) {
+                    String oldFilename = fileUploadService.extractFilenameFromUrl(oldAvatarUrl);
+                    if (oldFilename != null) {
+                        fileUploadService.deleteAvatar(oldFilename);
+                    }
+                }
+
+                // 上传新头像
+                FileUploadResponse uploadResponse = fileUploadService.uploadAvatar(avatarFile);
+                newAvatarUrl = uploadResponse.getFileUrl();
+            }
+
+            // 更新用户信息
+            User user = new User();
+            user.setId(userId);
+            if (StringUtils.hasText(request.getUsername())) {
+                user.setUsername(request.getUsername());
+            }
+            if (newAvatarUrl != null) {
+                user.setAvatar(newAvatarUrl);
+            } else if (request.getAvatar() != null) {
+                user.setAvatar(request.getAvatar());
+            }
+            if (request.getBio() != null) {
+                user.setBio(request.getBio());
+            }
+
+            int result = userMapper.updateById(user);
+            if (result <= 0) {
+                throw new RuntimeException("更新用户资料失败");
+            }
+
+            // 返回更新后的用户资料
+            return userMapper.selectUserProfile(userId);
+        } catch (Exception e) {
+            throw new RuntimeException("更新用户资料失败: " + e.getMessage(), e);
+        }
     }
 }

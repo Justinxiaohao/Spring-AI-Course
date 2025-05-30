@@ -4,6 +4,7 @@ import cn.sdtbu.edu.dto.*;
 import cn.sdtbu.edu.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -65,6 +66,44 @@ public class UserProfileController {
             }
 
             UserProfileDTO profile = userService.updateUserProfileByEmail(email, request);
+            return ApiResponse.success(profile, "更新用户信息成功");
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.badRequest(e.getMessage());
+        } catch (RuntimeException e) {
+            return ApiResponse.error(e.getMessage());
+        } catch (Exception e) {
+            return ApiResponse.error("更新用户信息失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 编辑用户信息（支持头像上传）
+     * POST /api/me/update-with-avatar
+     *
+     * @param username 用户名（可选）
+     * @param bio 个人简介（可选）
+     * @param avatar 头像文件（可选）
+     * @param email 用户邮箱地址（通过请求头传递）
+     * @return 更新后的用户资料
+     */
+    @PostMapping("/update-with-avatar")
+    public ApiResponse<UserProfileDTO> updateUserProfileWithAvatar(
+            @RequestParam(value = "username", required = false) String username,
+            @RequestParam(value = "bio", required = false) String bio,
+            @RequestParam(value = "avatar", required = false) MultipartFile avatar,
+            @RequestHeader(value = "User-Email", required = false) String email) {
+
+        try {
+            if (email == null || email.trim().isEmpty()) {
+                return ApiResponse.badRequest("用户未登录或邮箱地址无效");
+            }
+
+            // 构建更新请求对象
+            UpdateUserProfileRequest request = new UpdateUserProfileRequest();
+            request.setUsername(username);
+            request.setBio(bio);
+
+            UserProfileDTO profile = userService.updateUserProfileWithAvatarByEmail(email, request, avatar);
             return ApiResponse.success(profile, "更新用户信息成功");
         } catch (IllegalArgumentException e) {
             return ApiResponse.badRequest(e.getMessage());
