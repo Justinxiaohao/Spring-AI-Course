@@ -4,9 +4,11 @@ import cn.sdtbu.edu.dto.AddProgramToPlaylistRequest;
 import cn.sdtbu.edu.dto.PlaylistItemDTO;
 import cn.sdtbu.edu.dto.UpdatePlaylistOrderRequest;
 import cn.sdtbu.edu.entity.PlaylistItem;
+import cn.sdtbu.edu.entity.User;
 import cn.sdtbu.edu.mapper.PlaylistItemMapper;
 import cn.sdtbu.edu.mapper.PlaylistMapper;
 import cn.sdtbu.edu.mapper.RadioProgramMapper;
+import cn.sdtbu.edu.mapper.UserMapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,25 +32,44 @@ public class PlaylistItemService extends ServiceImpl<PlaylistItemMapper, Playlis
     @Autowired
     private RadioProgramMapper radioProgramMapper;
 
+    @Autowired
+    private UserMapper userMapper;
+
+
+
+
+
+
+
+
+
     /**
-     * 添加节目到歌单
+     * 通过邮箱添加节目到歌单
      * @param playlistId 歌单ID
-     * @param userId 用户ID
+     * @param email 用户邮箱
      * @param request 添加请求
      * @return 添加的歌单项
      */
     @Transactional(rollbackFor = Exception.class)
-    public PlaylistItemDTO addProgramToPlaylist(Integer playlistId, Integer userId, AddProgramToPlaylistRequest request) {
+    public PlaylistItemDTO addProgramToPlaylistByEmail(Integer playlistId, String email, AddProgramToPlaylistRequest request) {
         // 参数校验
         if (playlistId == null || playlistId <= 0) {
             throw new IllegalArgumentException("歌单ID不能为空或无效");
         }
-        if (userId == null || userId <= 0) {
-            throw new IllegalArgumentException("用户ID不能为空或无效");
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("邮箱地址不能为空");
         }
         if (request == null || request.getProgramId() == null || request.getProgramId() <= 0) {
             throw new IllegalArgumentException("节目ID不能为空或无效");
         }
+
+        // 根据邮箱查找用户
+        User user = userMapper.findByEmail(email);
+        if (user == null) {
+            throw new RuntimeException("邮箱地址不存在");
+        }
+
+        Integer userId = user.getId();
 
         // 检查歌单所有权
         int ownershipCount = playlistMapper.checkPlaylistOwnership(playlistId, userId);
@@ -88,12 +109,12 @@ public class PlaylistItemService extends ServiceImpl<PlaylistItemMapper, Playlis
     }
 
     /**
-     * 获取歌单内的节目列表
+     * 通过邮箱获取歌单内的节目列表
      * @param playlistId 歌单ID
-     * @param userId 用户ID（用于权限检查）
+     * @param email 用户邮箱（用于权限检查）
      * @return 歌单项列表
      */
-    public List<PlaylistItemDTO> getPlaylistItems(Integer playlistId, Integer userId) {
+    public List<PlaylistItemDTO> getPlaylistItemsByEmail(Integer playlistId, String email) {
         if (playlistId == null || playlistId <= 0) {
             throw new IllegalArgumentException("歌单ID不能为空或无效");
         }
@@ -104,14 +125,14 @@ public class PlaylistItemService extends ServiceImpl<PlaylistItemMapper, Playlis
     }
 
     /**
-     * 从歌单中移除节目
+     * 通过邮箱从歌单中移除节目
      * @param playlistId 歌单ID
      * @param itemId 歌单项ID
-     * @param userId 用户ID
+     * @param email 用户邮箱
      * @return 是否成功
      */
     @Transactional(rollbackFor = Exception.class)
-    public boolean removeProgramFromPlaylist(Integer playlistId, Integer itemId, Integer userId) {
+    public boolean removeProgramFromPlaylistByEmail(Integer playlistId, Integer itemId, String email) {
         // 参数校验
         if (playlistId == null || playlistId <= 0) {
             throw new IllegalArgumentException("歌单ID不能为空或无效");
@@ -119,9 +140,17 @@ public class PlaylistItemService extends ServiceImpl<PlaylistItemMapper, Playlis
         if (itemId == null || itemId <= 0) {
             throw new IllegalArgumentException("歌单项ID不能为空或无效");
         }
-        if (userId == null || userId <= 0) {
-            throw new IllegalArgumentException("用户ID不能为空或无效");
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("邮箱地址不能为空");
         }
+
+        // 根据邮箱查找用户
+        User user = userMapper.findByEmail(email);
+        if (user == null) {
+            throw new RuntimeException("邮箱地址不存在");
+        }
+
+        Integer userId = user.getId();
 
         // 检查歌单所有权
         int ownershipCount = playlistMapper.checkPlaylistOwnership(playlistId, userId);
@@ -141,24 +170,32 @@ public class PlaylistItemService extends ServiceImpl<PlaylistItemMapper, Playlis
     }
 
     /**
-     * 调整歌单内节目顺序
+     * 通过邮箱调整歌单内节目顺序
      * @param playlistId 歌单ID
-     * @param userId 用户ID
+     * @param email 用户邮箱
      * @param request 顺序调整请求
      * @return 是否成功
      */
     @Transactional(rollbackFor = Exception.class)
-    public boolean updatePlaylistOrder(Integer playlistId, Integer userId, UpdatePlaylistOrderRequest request) {
+    public boolean updatePlaylistOrderByEmail(Integer playlistId, String email, UpdatePlaylistOrderRequest request) {
         // 参数校验
         if (playlistId == null || playlistId <= 0) {
             throw new IllegalArgumentException("歌单ID不能为空或无效");
         }
-        if (userId == null || userId <= 0) {
-            throw new IllegalArgumentException("用户ID不能为空或无效");
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("邮箱地址不能为空");
         }
         if (request == null || request.getItemIds() == null || request.getItemIds().isEmpty()) {
             throw new IllegalArgumentException("歌单项ID列表不能为空");
         }
+
+        // 根据邮箱查找用户
+        User user = userMapper.findByEmail(email);
+        if (user == null) {
+            throw new RuntimeException("邮箱地址不存在");
+        }
+
+        Integer userId = user.getId();
 
         // 检查歌单所有权
         int ownershipCount = playlistMapper.checkPlaylistOwnership(playlistId, userId);
@@ -171,20 +208,20 @@ public class PlaylistItemService extends ServiceImpl<PlaylistItemMapper, Playlis
             List<Integer> itemIds = request.getItemIds();
             for (int i = 0; i < itemIds.size(); i++) {
                 Integer itemId = itemIds.get(i);
-                
+
                 // 检查歌单项是否属于该歌单
                 int itemCount = playlistItemMapper.checkItemInPlaylist(itemId, playlistId);
                 if (itemCount == 0) {
                     throw new RuntimeException("歌单项 " + itemId + " 不存在或不属于该歌单");
                 }
-                
+
                 // 更新显示顺序（从1开始）
                 int result = playlistItemMapper.updateDisplayOrder(itemId, i + 1);
                 if (result <= 0) {
                     throw new RuntimeException("更新歌单项 " + itemId + " 顺序失败");
                 }
             }
-            
+
             return true;
         } catch (Exception e) {
             throw new RuntimeException("调整歌单顺序失败: " + e.getMessage(), e);

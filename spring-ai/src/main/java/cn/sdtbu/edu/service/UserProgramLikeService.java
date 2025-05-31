@@ -1,7 +1,9 @@
 package cn.sdtbu.edu.service;
 
+import cn.sdtbu.edu.entity.User;
 import cn.sdtbu.edu.entity.UserProgramLike;
 import cn.sdtbu.edu.mapper.RadioProgramMapper;
+import cn.sdtbu.edu.mapper.UserMapper;
 import cn.sdtbu.edu.mapper.UserProgramLikeMapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,21 +23,40 @@ public class UserProgramLikeService extends ServiceImpl<UserProgramLikeMapper, U
     @Autowired
     private RadioProgramMapper radioProgramMapper;
 
+    @Autowired
+    private UserMapper userMapper;
+
+
+
+
+
+
+
+
+
     /**
-     * 用户喜欢节目
-     * @param userId 用户ID
+     * 用户通过邮箱喜欢节目
+     * @param email 用户邮箱
      * @param programId 节目ID
      * @return 操作结果
      */
     @Transactional(rollbackFor = Exception.class)
-    public boolean likeProgram(Integer userId, Integer programId) {
+    public boolean likeProgramByEmail(String email, Integer programId) {
         // 参数校验
-        if (userId == null || userId <= 0) {
-            throw new IllegalArgumentException("用户ID不能为空或无效");
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("邮箱地址不能为空");
         }
         if (programId == null || programId <= 0) {
             throw new IllegalArgumentException("节目ID不能为空或无效");
         }
+
+        // 根据邮箱查找用户
+        User user = userMapper.findByEmail(email);
+        if (user == null) {
+            throw new RuntimeException("邮箱地址不存在");
+        }
+
+        Integer userId = user.getId();
 
         // 检查是否已经喜欢过
         int existsCount = userProgramLikeMapper.checkUserLikeExists(userId, programId);
@@ -64,20 +85,28 @@ public class UserProgramLikeService extends ServiceImpl<UserProgramLikeMapper, U
     }
 
     /**
-     * 用户取消喜欢节目
-     * @param userId 用户ID
+     * 用户通过邮箱取消喜欢节目
+     * @param email 用户邮箱
      * @param programId 节目ID
      * @return 操作结果
      */
     @Transactional(rollbackFor = Exception.class)
-    public boolean unlikeProgram(Integer userId, Integer programId) {
+    public boolean unlikeProgramByEmail(String email, Integer programId) {
         // 参数校验
-        if (userId == null || userId <= 0) {
-            throw new IllegalArgumentException("用户ID不能为空或无效");
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("邮箱地址不能为空");
         }
         if (programId == null || programId <= 0) {
             throw new IllegalArgumentException("节目ID不能为空或无效");
         }
+
+        // 根据邮箱查找用户
+        User user = userMapper.findByEmail(email);
+        if (user == null) {
+            throw new RuntimeException("邮箱地址不存在");
+        }
+
+        Integer userId = user.getId();
 
         // 检查是否已经喜欢过
         int existsCount = userProgramLikeMapper.checkUserLikeExists(userId, programId);
@@ -106,41 +135,30 @@ public class UserProgramLikeService extends ServiceImpl<UserProgramLikeMapper, U
     }
 
     /**
-     * 检查用户是否喜欢某个节目
-     * @param userId 用户ID
+     * 通过邮箱检查用户是否喜欢某个节目
+     * @param email 用户邮箱
      * @param programId 节目ID
      * @return 是否喜欢
      */
-    public boolean isUserLikedProgram(Integer userId, Integer programId) {
-        if (userId == null || userId <= 0 || programId == null || programId <= 0) {
+    public boolean isUserLikedProgramByEmail(String email, Integer programId) {
+        if (email == null || email.trim().isEmpty() || programId == null || programId <= 0) {
             return false;
         }
-        
+
         try {
-            int count = userProgramLikeMapper.checkUserLikeExists(userId, programId);
+            // 根据邮箱查找用户
+            User user = userMapper.findByEmail(email);
+            if (user == null) {
+                return false;
+            }
+
+            // 检查用户是否喜欢该节目
+            int count = userProgramLikeMapper.checkUserLikeExists(user.getId(), programId);
             return count > 0;
         } catch (Exception e) {
             // 查询失败时返回false，不影响主要功能
             System.err.println("检查用户喜欢状态失败: " + e.getMessage());
             return false;
-        }
-    }
-
-    /**
-     * 获取用户喜欢的节目数量
-     * @param userId 用户ID
-     * @return 喜欢的节目数量
-     */
-    public int getUserLikesCount(Integer userId) {
-        if (userId == null || userId <= 0) {
-            return 0;
-        }
-        
-        try {
-            return userProgramLikeMapper.countUserLikes(userId);
-        } catch (Exception e) {
-            System.err.println("获取用户喜欢数量失败: " + e.getMessage());
-            return 0;
         }
     }
 }

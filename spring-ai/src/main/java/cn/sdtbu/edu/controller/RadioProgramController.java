@@ -149,24 +149,21 @@ public class RadioProgramController {
      * POST /api/programs/{programId}/like
      *
      * @param programId 节目ID
-     * @param userId 用户ID（临时通过请求头传递，实际项目中应通过JWT等方式获取）
+     * @param email 用户邮箱（通过请求头传递）
      * @return 操作结果
      */
     @PostMapping("/{programId}/like")
     public ApiResponse<Void> likeProgram(
             @PathVariable Integer programId,
-            @RequestHeader(value = "User-Id", required = false) Integer userId) {
+            @RequestHeader(value = "User-Email", required = false) String email) {
 
         try {
             // 简化的用户认证，实际项目中应该使用JWT等更安全的方式
-            if (userId == null || userId <= 0) {
-                return ApiResponse.badRequest("用户未登录或用户ID无效");
+            if (email == null || email.trim().isEmpty()) {
+                return ApiResponse.badRequest("用户未登录或邮箱地址无效");
             }
 
-            // 设置用户上下文
-            UserContext.setCurrentUserId(userId);
-
-            boolean success = userProgramLikeService.likeProgram(userId, programId);
+            boolean success = userProgramLikeService.likeProgramByEmail(email, programId);
             if (success) {
                 return ApiResponse.success("喜欢成功");
             } else {
@@ -178,9 +175,6 @@ public class RadioProgramController {
             return ApiResponse.error(e.getMessage());
         } catch (Exception e) {
             return ApiResponse.error("喜欢节目失败: " + e.getMessage());
-        } finally {
-            // 清除用户上下文
-            UserContext.clear();
         }
     }
 
@@ -189,24 +183,21 @@ public class RadioProgramController {
      * DELETE /api/programs/{programId}/like
      *
      * @param programId 节目ID
-     * @param userId 用户ID（临时通过请求头传递，实际项目中应通过JWT等方式获取）
+     * @param email 用户邮箱（通过请求头传递）
      * @return 操作结果
      */
     @DeleteMapping("/{programId}/like")
     public ApiResponse<Void> unlikeProgram(
             @PathVariable Integer programId,
-            @RequestHeader(value = "User-Id", required = false) Integer userId) {
+            @RequestHeader(value = "User-Email", required = false) String email) {
 
         try {
             // 简化的用户认证，实际项目中应该使用JWT等更安全的方式
-            if (userId == null || userId <= 0) {
-                return ApiResponse.badRequest("用户未登录或用户ID无效");
+            if (email == null || email.trim().isEmpty()) {
+                return ApiResponse.badRequest("用户未登录或邮箱地址无效");
             }
 
-            // 设置用户上下文
-            UserContext.setCurrentUserId(userId);
-
-            boolean success = userProgramLikeService.unlikeProgram(userId, programId);
+            boolean success = userProgramLikeService.unlikeProgramByEmail(email, programId);
             if (success) {
                 return ApiResponse.success("取消喜欢成功");
             } else {
@@ -218,9 +209,6 @@ public class RadioProgramController {
             return ApiResponse.error(e.getMessage());
         } catch (Exception e) {
             return ApiResponse.error("取消喜欢节目失败: " + e.getMessage());
-        } finally {
-            // 清除用户上下文
-            UserContext.clear();
         }
     }
 
@@ -229,20 +217,20 @@ public class RadioProgramController {
      * GET /api/programs/{programId}/like-status
      *
      * @param programId 节目ID
-     * @param userId 用户ID（临时通过请求头传递，实际项目中应通过JWT等方式获取）
+     * @param email 用户邮箱（通过请求头传递）
      * @return 喜欢状态
      */
     @GetMapping("/{programId}/like-status")
     public ApiResponse<Boolean> checkLikeStatus(
             @PathVariable Integer programId,
-            @RequestHeader(value = "User-Id", required = false) Integer userId) {
+            @RequestHeader(value = "User-Email", required = false) String email) {
 
         try {
-            if (userId == null || userId <= 0) {
+            if (email == null || email.trim().isEmpty()) {
                 return ApiResponse.success(false, "用户未登录");
             }
 
-            boolean isLiked = userProgramLikeService.isUserLikedProgram(userId, programId);
+            boolean isLiked = userProgramLikeService.isUserLikedProgramByEmail(email, programId);
             return ApiResponse.success(isLiked, "获取喜欢状态成功");
         } catch (Exception e) {
             return ApiResponse.error("获取喜欢状态失败: " + e.getMessage());

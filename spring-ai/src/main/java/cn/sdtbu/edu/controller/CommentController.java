@@ -26,27 +26,25 @@ public class CommentController {
     /**
      * 发表评论或回复评论
      * POST /api/programs/{programId}/comments
-     * 
+     *
      * @param programId 节目ID
      * @param request 评论请求
-     * @param userId 用户ID（临时通过请求头传递）
+     * @param email 用户邮箱（通过请求头传递）
      * @return 创建的评论
      */
     @PostMapping("/programs/{programId}/comments")
     public ApiResponse<CommentDTO> createComment(
             @PathVariable Integer programId,
             @RequestBody CreateCommentRequest request,
-            @RequestHeader(value = "User-Id", required = false) Integer userId) {
-        
+            @RequestHeader(value = "User-Email", required = false) String email) {
+
         try {
-            if (userId == null || userId <= 0) {
-                return ApiResponse.badRequest("用户未登录或用户ID无效");
+            if (email == null || email.trim().isEmpty()) {
+                return ApiResponse.badRequest("用户未登录或邮箱地址无效");
             }
-            
-            UserContext.setCurrentUserId(userId);
-            
-            CommentDTO comment = commentService.createComment(programId, userId, request);
-            
+
+            CommentDTO comment = commentService.createCommentByEmail(programId, email, request);
+
             String message = request.getParentCommentId() != null ? "回复评论成功" : "发表评论成功";
             return ApiResponse.success(comment, message);
         } catch (IllegalArgumentException e) {
@@ -55,8 +53,6 @@ public class CommentController {
             return ApiResponse.error(e.getMessage());
         } catch (Exception e) {
             return ApiResponse.error("操作失败: " + e.getMessage());
-        } finally {
-            UserContext.clear();
         }
     }
 
@@ -109,21 +105,21 @@ public class CommentController {
 
     /**
      * 获取用户的评论列表
-     * GET /api/users/{userId}/comments
-     * 
-     * @param userId 用户ID
+     * GET /api/users/{email}/comments
+     *
+     * @param email 用户邮箱
      * @param page 页码（默认1）
      * @param limit 每页大小（默认10，最大50）
      * @return 评论列表
      */
-    @GetMapping("/users/{userId}/comments")
+    @GetMapping("/users/{email}/comments")
     public ApiResponse<PageResult<CommentDTO>> getUserComments(
-            @PathVariable Integer userId,
+            @PathVariable String email,
             @RequestParam(value = "page", defaultValue = "1") Integer page,
             @RequestParam(value = "limit", defaultValue = "10") Integer limit) {
-        
+
         try {
-            PageResult<CommentDTO> result = commentService.getUserComments(userId, page, limit);
+            PageResult<CommentDTO> result = commentService.getUserCommentsByEmail(email, page, limit);
             return ApiResponse.success(result, "获取用户评论列表成功");
         } catch (IllegalArgumentException e) {
             return ApiResponse.badRequest(e.getMessage());
@@ -157,24 +153,22 @@ public class CommentController {
     /**
      * 删除评论
      * DELETE /api/comments/{commentId}
-     * 
+     *
      * @param commentId 评论ID
-     * @param userId 用户ID（临时通过请求头传递）
+     * @param email 用户邮箱（通过请求头传递）
      * @return 操作结果
      */
     @DeleteMapping("/comments/{commentId}")
     public ApiResponse<Void> deleteComment(
             @PathVariable Integer commentId,
-            @RequestHeader(value = "User-Id", required = false) Integer userId) {
-        
+            @RequestHeader(value = "User-Email", required = false) String email) {
+
         try {
-            if (userId == null || userId <= 0) {
-                return ApiResponse.badRequest("用户未登录或用户ID无效");
+            if (email == null || email.trim().isEmpty()) {
+                return ApiResponse.badRequest("用户未登录或邮箱地址无效");
             }
-            
-            UserContext.setCurrentUserId(userId);
-            
-            boolean success = commentService.deleteComment(commentId, userId);
+
+            boolean success = commentService.deleteCommentByEmail(commentId, email);
             if (success) {
                 return ApiResponse.success("删除评论成功");
             } else {
@@ -186,8 +180,6 @@ public class CommentController {
             return ApiResponse.error(e.getMessage());
         } catch (Exception e) {
             return ApiResponse.error("删除评论失败: " + e.getMessage());
-        } finally {
-            UserContext.clear();
         }
     }
 }

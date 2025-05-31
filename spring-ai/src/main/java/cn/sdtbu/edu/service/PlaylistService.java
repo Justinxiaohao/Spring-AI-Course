@@ -3,8 +3,10 @@ package cn.sdtbu.edu.service;
 import cn.sdtbu.edu.dto.*;
 import cn.sdtbu.edu.entity.Playlist;
 import cn.sdtbu.edu.entity.PlaylistItem;
+import cn.sdtbu.edu.entity.User;
 import cn.sdtbu.edu.mapper.PlaylistMapper;
 import cn.sdtbu.edu.mapper.PlaylistItemMapper;
+import cn.sdtbu.edu.mapper.UserMapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,17 +28,30 @@ public class PlaylistService extends ServiceImpl<PlaylistMapper, Playlist> {
     @Autowired
     private PlaylistItemMapper playlistItemMapper;
 
+    @Autowired
+    private UserMapper userMapper;
+
+
+
+
+
+
+
+
+
+
+
     /**
-     * 创建歌单
-     * @param userId 用户ID
+     * 通过邮箱创建歌单
+     * @param email 用户邮箱
      * @param request 创建请求
      * @return 创建的歌单
      */
     @Transactional(rollbackFor = Exception.class)
-    public PlaylistDTO createPlaylist(Integer userId, CreatePlaylistRequest request) {
+    public PlaylistDTO createPlaylistByEmail(String email, CreatePlaylistRequest request) {
         // 参数校验
-        if (userId == null || userId <= 0) {
-            throw new IllegalArgumentException("用户ID不能为空或无效");
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("邮箱地址不能为空");
         }
         if (request == null || !StringUtils.hasText(request.getName())) {
             throw new IllegalArgumentException("歌单名称不能为空");
@@ -44,6 +59,14 @@ public class PlaylistService extends ServiceImpl<PlaylistMapper, Playlist> {
         if (request.getName().length() > 100) {
             throw new IllegalArgumentException("歌单名称不能超过100个字符");
         }
+
+        // 根据邮箱查找用户
+        User user = userMapper.findByEmail(email);
+        if (user == null) {
+            throw new RuntimeException("邮箱地址不存在");
+        }
+
+        Integer userId = user.getId();
 
         // 检查是否已有同名歌单
         int existsCount = playlistMapper.checkPlaylistNameExists(userId, request.getName(), null);
@@ -68,27 +91,44 @@ public class PlaylistService extends ServiceImpl<PlaylistMapper, Playlist> {
     }
 
     /**
-     * 获取用户的歌单列表
-     * @param userId 用户ID
+     * 通过邮箱获取用户的歌单列表
+     * @param email 用户邮箱
      * @return 歌单列表
      */
-    public List<PlaylistDTO> getUserPlaylists(Integer userId) {
-        if (userId == null || userId <= 0) {
-            throw new IllegalArgumentException("用户ID不能为空或无效");
+    public List<PlaylistDTO> getUserPlaylistsByEmail(String email) {
+        // 参数校验
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("邮箱地址不能为空");
         }
 
-        return playlistMapper.selectUserPlaylists(userId);
+        // 根据邮箱查找用户
+        User user = userMapper.findByEmail(email);
+        if (user == null) {
+            throw new RuntimeException("邮箱地址不存在");
+        }
+
+        return playlistMapper.selectUserPlaylists(user.getId());
     }
 
     /**
-     * 获取歌单详情
+     * 通过邮箱获取歌单详情
      * @param playlistId 歌单ID
-     * @param userId 用户ID（用于权限检查）
+     * @param email 用户邮箱（用于权限检查）
      * @return 歌单详情
      */
-    public PlaylistDTO getPlaylistDetail(Integer playlistId, Integer userId) {
+    public PlaylistDTO getPlaylistDetailByEmail(Integer playlistId, String email) {
+        // 参数校验
         if (playlistId == null || playlistId <= 0) {
             throw new IllegalArgumentException("歌单ID不能为空或无效");
+        }
+
+        Integer userId = null;
+        if (email != null && !email.trim().isEmpty()) {
+            // 根据邮箱查找用户
+            User user = userMapper.findByEmail(email);
+            if (user != null) {
+                userId = user.getId();
+            }
         }
 
         PlaylistDTO playlist = playlistMapper.selectPlaylistDetailById(playlistId);
@@ -109,24 +149,32 @@ public class PlaylistService extends ServiceImpl<PlaylistMapper, Playlist> {
     }
 
     /**
-     * 更新歌单
+     * 通过邮箱更新歌单
      * @param playlistId 歌单ID
-     * @param userId 用户ID
+     * @param email 用户邮箱
      * @param request 更新请求
      * @return 更新后的歌单
      */
     @Transactional(rollbackFor = Exception.class)
-    public PlaylistDTO updatePlaylist(Integer playlistId, Integer userId, UpdatePlaylistRequest request) {
+    public PlaylistDTO updatePlaylistByEmail(Integer playlistId, String email, UpdatePlaylistRequest request) {
         // 参数校验
         if (playlistId == null || playlistId <= 0) {
             throw new IllegalArgumentException("歌单ID不能为空或无效");
         }
-        if (userId == null || userId <= 0) {
-            throw new IllegalArgumentException("用户ID不能为空或无效");
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("邮箱地址不能为空");
         }
         if (request == null) {
             throw new IllegalArgumentException("更新请求不能为空");
         }
+
+        // 根据邮箱查找用户
+        User user = userMapper.findByEmail(email);
+        if (user == null) {
+            throw new RuntimeException("邮箱地址不存在");
+        }
+
+        Integer userId = user.getId();
 
         // 检查歌单所有权
         int ownershipCount = playlistMapper.checkPlaylistOwnership(playlistId, userId);
@@ -168,20 +216,28 @@ public class PlaylistService extends ServiceImpl<PlaylistMapper, Playlist> {
     }
 
     /**
-     * 删除歌单
+     * 通过邮箱删除歌单
      * @param playlistId 歌单ID
-     * @param userId 用户ID
+     * @param email 用户邮箱
      * @return 是否成功
      */
     @Transactional(rollbackFor = Exception.class)
-    public boolean deletePlaylist(Integer playlistId, Integer userId) {
+    public boolean deletePlaylistByEmail(Integer playlistId, String email) {
         // 参数校验
         if (playlistId == null || playlistId <= 0) {
             throw new IllegalArgumentException("歌单ID不能为空或无效");
         }
-        if (userId == null || userId <= 0) {
-            throw new IllegalArgumentException("用户ID不能为空或无效");
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("邮箱地址不能为空");
         }
+
+        // 根据邮箱查找用户
+        User user = userMapper.findByEmail(email);
+        if (user == null) {
+            throw new RuntimeException("邮箱地址不存在");
+        }
+
+        Integer userId = user.getId();
 
         // 检查歌单所有权
         int ownershipCount = playlistMapper.checkPlaylistOwnership(playlistId, userId);
