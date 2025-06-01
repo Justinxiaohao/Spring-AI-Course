@@ -55,28 +55,4 @@ public class CategoryController {
             return ApiResponse.error("获取分类详情失败: " + e.getMessage());
         }
     }
-
-    /**
-     * 创建新分类
-     * POST /api/categories
-     * 
-     * @param category 分类信息
-     * @return 创建结果
-     */
-    @PostMapping
-    public ApiResponse<Category> createCategory(@RequestBody Category category) {
-        try {
-            Category newCategory = categoryService.createCategory(
-                category.getName(), 
-                category.getDescription()
-            );
-            return ApiResponse.success(newCategory, "创建分类成功");
-        } catch (IllegalArgumentException e) {
-            return ApiResponse.badRequest(e.getMessage());
-        } catch (RuntimeException e) {
-            return ApiResponse.error(e.getMessage());
-        } catch (Exception e) {
-            return ApiResponse.error("创建分类失败: " + e.getMessage());
-        }
-    }
 }
