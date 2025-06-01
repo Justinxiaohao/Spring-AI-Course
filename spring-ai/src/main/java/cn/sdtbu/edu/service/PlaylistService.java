@@ -7,6 +7,8 @@ import cn.sdtbu.edu.entity.User;
 import cn.sdtbu.edu.mapper.PlaylistMapper;
 import cn.sdtbu.edu.mapper.PlaylistItemMapper;
 import cn.sdtbu.edu.mapper.UserMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -255,5 +257,68 @@ public class PlaylistService extends ServiceImpl<PlaylistMapper, Playlist> {
         } catch (Exception e) {
             throw new RuntimeException("删除歌单失败: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * 获取所有公开歌单列表（用于主页展示）
+     * @return 公开歌单列表
+     */
+    public List<PlaylistDTO> getPublicPlaylists() {
+        try {
+            return playlistMapper.selectPublicPlaylists();
+        } catch (Exception e) {
+            throw new RuntimeException("获取公开歌单列表失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 获取所有公开歌单列表（用于主页展示）- 限制数量
+     * @param limit 限制数量
+     * @return 公开歌单列表
+     */
+    public List<PlaylistDTO> getPublicPlaylists(Integer limit) {
+        try {
+            List<PlaylistDTO> playlists = playlistMapper.selectPublicPlaylists();
+
+            // 如果指定了限制数量，则截取前N个
+            if (limit != null && limit > 0 && playlists.size() > limit) {
+                return playlists.subList(0, limit);
+            }
+
+            return playlists;
+        } catch (Exception e) {
+            throw new RuntimeException("获取公开歌单列表失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 搜索歌单
+     * @param keyword 搜索关键词
+     * @param page 页码
+     * @param limit 每页大小
+     * @return 搜索结果
+     */
+    public PageResult<PlaylistDTO> searchPlaylists(String keyword, Integer page, Integer limit) {
+        // 参数校验
+        if (page == null || page < 1) {
+            page = 1;
+        }
+        if (limit == null || limit < 1 || limit > 50) {
+            limit = 10; // 默认每页10条，最大50条
+        }
+
+        // 创建分页对象
+        Page<PlaylistDTO> pageObj = new Page<>(page, limit);
+
+        // 执行搜索
+        IPage<PlaylistDTO> result = playlistMapper.searchPlaylists(pageObj, keyword);
+
+        // 转换为自定义分页结果
+        return PageResult.of(
+            result.getRecords(),
+            result.getTotal(),
+            result.getCurrent(),
+            result.getSize()
+        );
     }
 }

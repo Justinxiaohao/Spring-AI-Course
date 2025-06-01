@@ -56,9 +56,7 @@ public class UserService {
             user.setUsername(username);
             user.setAvatar("/img/avatar0" + (new java.util.Random().nextInt(3) + 1) + ".png");
             user.setBio("这是"+username+"的心理音乐电台");
-            Date now = new Date();
-            Timestamp timestamp = new Timestamp(now.getTime());
-            user.setCreatedAt(timestamp);
+            // 移除手动设置创建时间，依赖MetaObjectHandler自动填充
             return userMapper.insert(user) > 0 ? user : null;
         } catch (Exception e) {
             throw new RuntimeException("注册失败：密码加密出错", e);

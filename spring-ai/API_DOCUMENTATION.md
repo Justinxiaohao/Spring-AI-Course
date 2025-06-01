@@ -303,7 +303,67 @@ Headers:
 
 ## 3. 歌单管理
 
-### 3.1 创建歌单
+### 3.1 获取公开歌单列表（主页展示）
+
+**接口地址：** `GET /api/playlists/public`
+
+**功能描述：** 获取所有公开的歌单列表，用于主页展示
+
+**请求参数：**
+| 参数名 | 类型 | 必填 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| limit | Integer | 否 | - | 限制返回数量（1-100），不传则返回所有 |
+
+**请求示例：**
+
+```
+GET /api/playlists/public?limit=20
+```
+
+**响应格式：**
+
+```json
+{
+  "code": 200,
+  "message": "获取公开歌单列表成功",
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "userId": 123,
+      "name": "治愈心灵的音乐",
+      "description": "精选治愈系音乐，帮助放松心情",
+      "isPublic": true,
+      "createdAt": "2024-01-20T10:30:00",
+      "updatedAt": "2024-01-20T15:45:00",
+      "itemCount": 15,
+      "userName": "音乐爱好者",
+      "userAvatar": "/img/avatar01.png"
+    },
+    {
+      "id": 2,
+      "userId": 456,
+      "name": "深度冥想合集",
+      "description": "专业冥想引导音频合集",
+      "isPublic": true,
+      "createdAt": "2024-01-19T14:20:00",
+      "updatedAt": "2024-01-19T16:30:00",
+      "itemCount": 8,
+      "userName": "冥想导师",
+      "userAvatar": "/img/avatar02.png"
+    }
+  ]
+}
+```
+
+**特殊说明：**
+
+- 只返回公开的歌单（isPublic = true）
+- 只返回包含节目的歌单（itemCount > 0）
+- 按更新时间倒序排列
+- 包含创建者的用户名和头像信息
+
+### 3.2 创建歌单
 
 **接口地址：** `POST /api/playlists`
 
@@ -901,7 +961,7 @@ Headers:
 | page | Integer | 否 | 1 | 页码 |
 | limit | Integer | 否 | 10 | 每页大小（最大 50） |
 
-## 7. 节目搜索
+## 7. 搜索功能
 
 ### 7.1 搜索节目
 
@@ -951,6 +1011,70 @@ Headers:
   }
 }
 ```
+
+### 7.2 搜索歌单
+
+**接口地址：** `GET /api/playlists/search`
+
+**功能描述：** 通过关键词搜索公开歌单
+
+**查询参数：**
+| 参数名 | 类型 | 必填 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| q | String | 否 | - | 搜索关键词，为空时返回所有公开歌单 |
+| page | Integer | 否 | 1 | 页码 |
+| limit | Integer | 否 | 10 | 每页大小（最大 50） |
+
+**搜索范围：**
+
+- 歌单名称 (name)
+- 歌单描述 (description)
+- 创建者用户名 (username)
+
+**请求示例：**
+
+```
+GET /api/playlists/search?q=冥想&page=1&limit=10
+```
+
+**响应格式：**
+
+```json
+{
+  "code": 200,
+  "message": "搜索歌单成功，关键词：冥想",
+  "success": true,
+  "data": {
+    "records": [
+      {
+        "id": 1,
+        "userId": 123,
+        "name": "深度冥想合集",
+        "description": "专业冥想引导音频合集",
+        "isPublic": true,
+        "createdAt": "2024-01-19T14:20:00",
+        "updatedAt": "2024-01-19T16:30:00",
+        "itemCount": 8,
+        "userName": "冥想导师",
+        "userAvatar": "/img/avatar02.png"
+      }
+    ],
+    "total": 1,
+    "current": 1,
+    "size": 10,
+    "pages": 1,
+    "hasPrevious": false,
+    "hasNext": false
+  }
+}
+```
+
+**特殊说明：**
+
+- 只搜索公开的歌单（isPublic = true）
+- 只返回包含节目的歌单（itemCount > 0）
+- 按更新时间倒序排列
+- 包含创建者的用户名和头像信息
 
 ## 8. 分类管理
 
@@ -1065,6 +1189,33 @@ async function searchPrograms(keyword, page = 1, limit = 10) {
 // 使用示例
 searchPrograms("冥想", 1, 10);
 searchPrograms("", 1, 20); // 获取所有节目
+
+// 搜索歌单
+async function searchPlaylists(keyword, page = 1, limit = 10) {
+  try {
+    const params = new URLSearchParams({
+      q: keyword,
+      page: page,
+      limit: limit,
+    });
+
+    const response = await fetch(`/api/playlists/search?${params}`);
+    const result = await response.json();
+
+    if (result.success) {
+      console.log("搜索结果:", result.data);
+      return result.data;
+    } else {
+      console.error("搜索失败:", result.message);
+    }
+  } catch (error) {
+    console.error("搜索歌单失败:", error);
+  }
+}
+
+// 使用示例
+searchPlaylists("冥想", 1, 10);
+searchPlaylists("", 1, 20); // 获取所有公开歌单
 ```
 
 ### 10.5 个人中心功能

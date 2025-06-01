@@ -103,21 +103,43 @@ public class RadioProgramController {
     }
 
     /**
-     * 获取热门节目
+     * 获取热门节目（按热门度分数排序）
      * GET /api/programs/hot
-     * 
+     *
+     * 热门度计算规则：热门度 = 点赞数 * 3.0 + 评论数 * 5.0 + 播放数 * 1.0
+     *
      * @param page 页码（默认1）
      * @param limit 每页大小（默认10，最大50）
+     * @param withRank 是否包含排名信息（默认false）
      * @return 热门节目列表
      */
     @GetMapping("/hot")
     public ApiResponse<PageResult<RadioProgramDTO>> getHotPrograms(
             @RequestParam(value = "page", defaultValue = "1") Integer page,
-            @RequestParam(value = "limit", defaultValue = "10") Integer limit) {
-        
+            @RequestParam(value = "limit", defaultValue = "10") Integer limit,
+            @RequestParam(value = "withRank", defaultValue = "false") Boolean withRank) {
+
         try {
-            PageResult<RadioProgramDTO> result = radioProgramService.getHotPrograms(page, limit);
+            // 参数验证
+            if (page != null && page < 1) {
+                return ApiResponse.badRequest("页码必须大于0");
+            }
+            if (limit != null && (limit < 1 || limit > 50)) {
+                return ApiResponse.badRequest("每页大小必须在1-50之间");
+            }
+
+            PageResult<RadioProgramDTO> result;
+            if (withRank != null && withRank) {
+                // 获取带排名的热门节目
+                result = radioProgramService.getHotProgramsWithRank(page, limit);
+            } else {
+                // 获取普通热门节目
+                result = radioProgramService.getHotPrograms(page, limit);
+            }
+
             return ApiResponse.success(result, "获取热门节目成功");
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.badRequest(e.getMessage());
         } catch (Exception e) {
             return ApiResponse.error("获取热门节目失败: " + e.getMessage());
         }

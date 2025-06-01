@@ -9,6 +9,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 /**
  * 电台节目Mapper接口
  * @author Wyh
@@ -135,7 +137,7 @@ public interface RadioProgramMapper extends BaseMapper<RadioProgram> {
     int decrementCommentsCount(@Param("programId") Integer programId);
 
     /**
-     * 获取热门节目（按播放次数排序）
+     * 获取热门节目（按播放次数排序）- 旧版本，保留兼容性
      * @param page 分页对象
      * @param limit 限制数量
      * @return 热门节目列表
@@ -151,7 +153,7 @@ public interface RadioProgramMapper extends BaseMapper<RadioProgram> {
         "ORDER BY rp.plays_count DESC ",
         "LIMIT #{limit}"
     })
-    IPage<RadioProgramDTO> selectHotPrograms(
+    IPage<RadioProgramDTO> selectHotProgramsByPlays(
         Page<RadioProgramDTO> page,
         @Param("limit") Integer limit
     );
@@ -205,4 +207,56 @@ public interface RadioProgramMapper extends BaseMapper<RadioProgram> {
         "</script>"
     })
     IPage<RadioProgramDTO> searchPrograms(Page<RadioProgramDTO> page, @Param("keyword") String keyword);
+
+    /**
+     * 获取热门节目列表（按热门度分数排序）
+     * @param page 分页对象
+     * @return 热门节目列表
+     */
+    @Select({
+        "SELECT ",
+        "    rp.id, rp.title, rp.description, rp.audio_url as audioUrl, ",
+        "    rp.cover_image_url as coverImageUrl, rp.artist_narrator as artistNarrator, ",
+        "    rp.duration_seconds as durationSeconds, rp.plays_count as playsCount, ",
+        "    rp.likes_count as likesCount, rp.comments_count as commentsCount, ",
+        "    rp.tags, rp.is_featured as isFeatured, rp.status, ",
+        "    rp.created_at as createdAt, rp.updated_at as updatedAt, ",
+        "    c.name as categoryName, ",
+        "    (rp.likes_count * 3.0 + rp.comments_count * 5.0 + rp.plays_count * 1.0) as hotScore ",
+        "FROM radio_programs rp ",
+        "LEFT JOIN categories c ON rp.category_id = c.id ",
+        "WHERE rp.status = 'published' ",
+        "ORDER BY hotScore DESC, rp.created_at DESC"
+    })
+    IPage<RadioProgramDTO> selectHotPrograms(Page<RadioProgramDTO> page);
+
+    /**
+     * 获取热门节目列表（带排名）
+     * @param page 分页对象
+     * @return 热门节目列表
+     */
+    @Select({
+        "SELECT ",
+        "    ranked_programs.*, ",
+        "    @row_number := @row_number + 1 as hotRank ",
+        "FROM (",
+        "    SELECT ",
+        "        rp.id, rp.title, rp.description, rp.audio_url as audioUrl, ",
+        "        rp.cover_image_url as coverImageUrl, rp.artist_narrator as artistNarrator, ",
+        "        rp.duration_seconds as durationSeconds, rp.plays_count as playsCount, ",
+        "        rp.likes_count as likesCount, rp.comments_count as commentsCount, ",
+        "        rp.tags, rp.is_featured as isFeatured, rp.status, ",
+        "        rp.created_at as createdAt, rp.updated_at as updatedAt, ",
+        "        c.name as categoryName, ",
+        "        (rp.likes_count * 3.0 + rp.comments_count * 5.0 + rp.plays_count * 1.0) as hotScore ",
+        "    FROM radio_programs rp ",
+        "    LEFT JOIN categories c ON rp.category_id = c.id ",
+        "    WHERE rp.status = 'published' ",
+        "    ORDER BY hotScore DESC, rp.created_at DESC ",
+        "    LIMIT #{page.size} OFFSET #{page.offset}",
+        ") ranked_programs ",
+        "CROSS JOIN (SELECT @row_number := #{page.offset}) r ",
+        "ORDER BY hotScore DESC"
+    })
+    List<RadioProgramDTO> selectHotProgramsWithRank(Page<RadioProgramDTO> page);
 }

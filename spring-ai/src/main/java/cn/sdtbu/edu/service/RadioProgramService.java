@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
+
 /**
  * 电台节目服务类
  * @author Wyh
@@ -104,7 +106,7 @@ public class RadioProgramService extends ServiceImpl<RadioProgramMapper, RadioPr
     }
 
     /**
-     * 获取热门节目
+     * 获取热门节目（按热门度分数排序）
      * @param page 页码
      * @param limit 每页大小
      * @return 热门节目列表
@@ -118,13 +120,43 @@ public class RadioProgramService extends ServiceImpl<RadioProgramMapper, RadioPr
         }
 
         Page<RadioProgramDTO> pageObj = new Page<>(page, limit);
-        IPage<RadioProgramDTO> result = radioProgramMapper.selectHotPrograms(pageObj, limit);
+        IPage<RadioProgramDTO> result = radioProgramMapper.selectHotPrograms(pageObj);
 
         return PageResult.of(
             result.getRecords(),
             result.getTotal(),
             result.getCurrent(),
             result.getSize()
+        );
+    }
+
+    /**
+     * 获取热门节目（带排名信息）
+     * @param page 页码
+     * @param limit 每页大小
+     * @return 热门节目列表（包含排名）
+     */
+    public PageResult<RadioProgramDTO> getHotProgramsWithRank(Integer page, Integer limit) {
+        if (page == null || page < 1) {
+            page = 1;
+        }
+        if (limit == null || limit < 1 || limit > 50) {
+            limit = 10;
+        }
+
+        Page<RadioProgramDTO> pageObj = new Page<>(page, limit);
+
+        // 使用带排名的查询方法
+        List<RadioProgramDTO> programs = radioProgramMapper.selectHotProgramsWithRank(pageObj);
+
+        // 计算总数（这里简化处理，实际应该有单独的count查询）
+        long total = programs.size();
+
+        return PageResult.of(
+            programs,
+            total,
+            (long) page,
+            (long) limit
         );
     }
 

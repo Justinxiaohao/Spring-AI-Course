@@ -25,6 +25,39 @@ public class PlaylistController {
     private PlaylistItemService playlistItemService;
 
     /**
+     * 获取所有公开歌单列表（用于主页展示）
+     * GET /api/playlists/public
+     *
+     * @param limit 限制数量（可选，默认返回所有）
+     * @return 公开歌单列表
+     */
+    @GetMapping("/public")
+    public ApiResponse<List<PlaylistDTO>> getPublicPlaylists(
+            @RequestParam(value = "limit", required = false) Integer limit) {
+
+        try {
+            // 参数验证
+            if (limit != null && limit <= 0) {
+                return ApiResponse.badRequest("限制数量必须大于0");
+            }
+            if (limit != null && limit > 100) {
+                return ApiResponse.badRequest("限制数量不能超过100");
+            }
+
+            List<PlaylistDTO> playlists;
+            if (limit != null) {
+                playlists = playlistService.getPublicPlaylists(limit);
+            } else {
+                playlists = playlistService.getPublicPlaylists();
+            }
+
+            return ApiResponse.success(playlists, "获取公开歌单列表成功");
+        } catch (Exception e) {
+            return ApiResponse.error("获取公开歌单列表失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * 创建歌单
      * POST /api/playlists
      *
@@ -288,6 +321,34 @@ public class PlaylistController {
             return ApiResponse.error(e.getMessage());
         } catch (Exception e) {
             return ApiResponse.error("调整歌单顺序失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 搜索歌单
+     * GET /api/playlists/search
+     *
+     * @param q 搜索关键词
+     * @param page 页码（默认1）
+     * @param limit 每页大小（默认10，最大50）
+     * @return 搜索结果
+     */
+    @GetMapping("/search")
+    public ApiResponse<PageResult<PlaylistDTO>> searchPlaylists(
+            @RequestParam(value = "q", required = false) String q,
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @RequestParam(value = "limit", defaultValue = "10") Integer limit) {
+
+        try {
+            PageResult<PlaylistDTO> result = playlistService.searchPlaylists(q, page, limit);
+
+            String message = (q != null && !q.trim().isEmpty())
+                ? "搜索歌单成功，关键词：" + q
+                : "获取所有公开歌单成功";
+
+            return ApiResponse.success(result, message);
+        } catch (Exception e) {
+            return ApiResponse.error("搜索歌单失败: " + e.getMessage());
         }
     }
 }

@@ -110,6 +110,16 @@ public class RadioProgramDTO {
     private Timestamp updatedAt;
 
     /**
+     * 热门度分数（可选字段，用于热门节目排序）
+     */
+    private Double hotScore;
+
+    /**
+     * 热门度排名（可选字段，用于热门节目排序）
+     */
+    private Integer hotRank;
+
+    /**
      * 无参构造函数
      */
     public RadioProgramDTO() {

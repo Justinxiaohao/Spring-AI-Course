@@ -59,6 +59,16 @@ public class PlaylistDTO {
     private List<PlaylistItemDTO> items;
 
     /**
+     * 创建者用户名（用于公开歌单展示）
+     */
+    private String userName;
+
+    /**
+     * 创建者头像URL（用于公开歌单展示）
+     */
+    private String userAvatar;
+
+    /**
      * 无参构造函数
      */
     public PlaylistDTO() {
