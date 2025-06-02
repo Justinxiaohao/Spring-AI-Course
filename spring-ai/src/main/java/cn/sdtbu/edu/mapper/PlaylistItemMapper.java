@@ -19,17 +19,6 @@ public interface PlaylistItemMapper extends BaseMapper<PlaylistItem> {
      * @param playlistId 歌单ID
      * @return 歌单项列表
      */
-    @Select({
-        "SELECT ",
-        "    pi.id, pi.playlist_id as playlistId, pi.program_id as programId, ",
-        "    pi.display_order as displayOrder, pi.added_at as addedAt, ",
-        "    rp.title as programTitle, rp.cover_image_url as programCoverImageUrl, ",
-        "    rp.artist_narrator as programArtistNarrator, rp.duration_seconds as programDurationSeconds ",
-        "FROM playlist_items pi ",
-        "JOIN radio_programs rp ON pi.program_id = rp.id ",
-        "WHERE pi.playlist_id = #{playlistId} AND rp.status = 'published' ",
-        "ORDER BY pi.display_order ASC, pi.added_at ASC"
-    })
     List<PlaylistItemDTO> selectPlaylistItems(@Param("playlistId") Integer playlistId);
 
     /**
@@ -38,7 +27,6 @@ public interface PlaylistItemMapper extends BaseMapper<PlaylistItem> {
      * @param programId 节目ID
      * @return 记录数量
      */
-    @Select("SELECT COUNT(*) FROM playlist_items WHERE playlist_id = #{playlistId} AND program_id = #{programId}")
     int checkProgramInPlaylist(@Param("playlistId") Integer playlistId, @Param("programId") Integer programId);
 
     /**
@@ -46,7 +34,6 @@ public interface PlaylistItemMapper extends BaseMapper<PlaylistItem> {
      * @param playlistId 歌单ID
      * @return 最大显示顺序
      */
-    @Select("SELECT COALESCE(MAX(display_order), 0) FROM playlist_items WHERE playlist_id = #{playlistId}")
     int getMaxDisplayOrder(@Param("playlistId") Integer playlistId);
 
     /**
@@ -55,7 +42,6 @@ public interface PlaylistItemMapper extends BaseMapper<PlaylistItem> {
      * @param playlistId 歌单ID
      * @return 记录数量
      */
-    @Select("SELECT COUNT(*) FROM playlist_items WHERE id = #{itemId} AND playlist_id = #{playlistId}")
     int checkItemInPlaylist(@Param("itemId") Integer itemId, @Param("playlistId") Integer playlistId);
 
     /**
@@ -64,7 +50,6 @@ public interface PlaylistItemMapper extends BaseMapper<PlaylistItem> {
      * @param displayOrder 新的显示顺序
      * @return 影响行数
      */
-    @Update("UPDATE playlist_items SET display_order = #{displayOrder} WHERE id = #{itemId}")
     int updateDisplayOrder(@Param("itemId") Integer itemId, @Param("displayOrder") Integer displayOrder);
 
     /**
@@ -72,7 +57,6 @@ public interface PlaylistItemMapper extends BaseMapper<PlaylistItem> {
      * @param playlistId 歌单ID
      * @return 影响行数
      */
-    @Delete("DELETE FROM playlist_items WHERE playlist_id = #{playlistId}")
     int deleteByPlaylistId(@Param("playlistId") Integer playlistId);
 
     /**
@@ -80,15 +64,5 @@ public interface PlaylistItemMapper extends BaseMapper<PlaylistItem> {
      * @param itemId 歌单项ID
      * @return 歌单项详情
      */
-    @Select({
-        "SELECT ",
-        "    pi.id, pi.playlist_id as playlistId, pi.program_id as programId, ",
-        "    pi.display_order as displayOrder, pi.added_at as addedAt, ",
-        "    rp.title as programTitle, rp.cover_image_url as programCoverImageUrl, ",
-        "    rp.artist_narrator as programArtistNarrator, rp.duration_seconds as programDurationSeconds ",
-        "FROM playlist_items pi ",
-        "JOIN radio_programs rp ON pi.program_id = rp.id ",
-        "WHERE pi.id = #{itemId}"
-    })
     PlaylistItemDTO selectItemDetailById(@Param("itemId") Integer itemId);
 }

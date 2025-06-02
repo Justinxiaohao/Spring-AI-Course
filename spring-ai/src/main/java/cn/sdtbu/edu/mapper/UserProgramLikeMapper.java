@@ -18,7 +18,6 @@ public interface UserProgramLikeMapper extends BaseMapper<UserProgramLike> {
      * @param programId 节目ID
      * @return 记录数量（0表示未喜欢，1表示已喜欢）
      */
-    @Select("SELECT COUNT(*) FROM user_program_likes WHERE user_id = #{userId} AND program_id = #{programId}")
     int checkUserLikeExists(@Param("userId") Integer userId, @Param("programId") Integer programId);
 
     /**
@@ -27,7 +26,6 @@ public interface UserProgramLikeMapper extends BaseMapper<UserProgramLike> {
      * @param programId 节目ID
      * @return 影响行数
      */
-    @Insert("INSERT INTO user_program_likes (user_id, program_id, created_at) VALUES (#{userId}, #{programId}, NOW())")
     int insertUserLike(@Param("userId") Integer userId, @Param("programId") Integer programId);
 
     /**
@@ -36,7 +34,6 @@ public interface UserProgramLikeMapper extends BaseMapper<UserProgramLike> {
      * @param programId 节目ID
      * @return 影响行数
      */
-    @Delete("DELETE FROM user_program_likes WHERE user_id = #{userId} AND program_id = #{programId}")
     int deleteUserLike(@Param("userId") Integer userId, @Param("programId") Integer programId);
 
     /**
@@ -44,6 +41,5 @@ public interface UserProgramLikeMapper extends BaseMapper<UserProgramLike> {
      * @param userId 用户ID
      * @return 喜欢的节目数量
      */
-    @Select("SELECT COUNT(*) FROM user_program_likes WHERE user_id = #{userId}")
     int countUserLikes(@Param("userId") Integer userId);
 }

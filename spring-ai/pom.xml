@@ -91,6 +91,7 @@
             <artifactId>mybatis-plus-jsqlparser</artifactId>
             <version>3.5.12</version>
         </dependency>
+
     </dependencies>
     <dependencyManagement>
         <dependencies>

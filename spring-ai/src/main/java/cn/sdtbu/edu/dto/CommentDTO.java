@@ -34,6 +34,11 @@ public class CommentDTO {
     private String userEmail;
 
     /**
+     * 用户头像URL
+     */
+    private String userAvatar;
+
+    /**
      * 节目ID
      */
     private Integer programId;
@@ -47,6 +52,11 @@ public class CommentDTO {
      * 父评论ID
      */
     private Integer parentCommentId;
+
+    /**
+     * 父评论用户ID
+     */
+    private Integer parentUserId;
 
     /**
      * 父评论用户名（用于回复显示）

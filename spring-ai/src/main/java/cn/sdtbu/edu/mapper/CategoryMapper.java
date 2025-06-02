@@ -18,7 +18,6 @@ public interface CategoryMapper extends BaseMapper<Category> {
      * 获取所有分类列表
      * @return 分类列表
      */
-    @Select("SELECT id, name, description, created_at as createdAt FROM categories ORDER BY created_at ASC")
     List<Category> selectAllCategories();
 
     /**
@@ -26,6 +25,5 @@ public interface CategoryMapper extends BaseMapper<Category> {
      * @param name 分类名称
      * @return 分类信息
      */
-    @Select("SELECT id, name, description, created_at as createdAt FROM categories WHERE name = #{name}")
     Category selectByName(String name);
 }
