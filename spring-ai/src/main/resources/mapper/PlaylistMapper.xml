@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.sdtbu.edu.mapper.PlaylistMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="PlaylistDTOResultMap" type="cn.sdtbu.edu.dto.PlaylistDTO">
+        <id column="id" property="id"/>
+        <result column="userId" property="userId"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="isPublic" property="isPublic"/>
+        <result column="createdAt" property="createdAt"/>
+        <result column="updatedAt" property="updatedAt"/>
+        <result column="userName" property="userName"/>
+        <result column="userAvatar" property="userAvatar"/>
+        <result column="itemCount" property="itemCount"/>
+    </resultMap>
+
+    <!-- 获取用户的歌单列表 -->
+    <select id="selectUserPlaylists" resultMap="PlaylistDTOResultMap">
+        SELECT 
+            p.id, p.user_id as userId, p.name, p.description, p.is_public as isPublic,
+            p.created_at as createdAt, p.updated_at as updatedAt,
+            u.username as userName, u.avatar as userAvatar,
+            COALESCE(item_count.count, 0) as itemCount
+        FROM playlists p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN (
+            SELECT playlist_id, COUNT(*) as count
+            FROM playlist_items pi
+            JOIN radio_programs rp ON pi.program_id = rp.id
+            WHERE rp.status = 'published'
+            GROUP BY playlist_id
+        ) item_count ON p.id = item_count.playlist_id
+        WHERE p.user_id = #{userId}
+        ORDER BY p.created_at DESC
+    </select>
+
+    <!-- 获取歌单详情 -->
+    <select id="selectPlaylistDetailById" resultMap="PlaylistDTOResultMap">
+        SELECT 
+            p.id, p.user_id as userId, p.name, p.description, p.is_public as isPublic,
+            p.created_at as createdAt, p.updated_at as updatedAt,
+            u.username as userName, u.avatar as userAvatar,
+            COALESCE(item_count.count, 0) as itemCount
+        FROM playlists p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN (
+            SELECT playlist_id, COUNT(*) as count
+            FROM playlist_items pi
+            JOIN radio_programs rp ON pi.program_id = rp.id
+            WHERE rp.status = 'published'
+            GROUP BY playlist_id
+        ) item_count ON p.id = item_count.playlist_id
+        WHERE p.id = #{playlistId}
+    </select>
+
+    <!-- 检查歌单是否属于指定用户 -->
+    <select id="checkPlaylistOwnership" resultType="int">
+        SELECT COUNT(*) FROM playlists WHERE id = #{playlistId} AND user_id = #{userId}
+    </select>
+
+    <!-- 检查用户是否已有同名歌单 -->
+    <select id="checkPlaylistNameExists" resultType="int">
+        SELECT COUNT(*) FROM playlists
+        WHERE user_id = #{userId} AND name = #{name}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <!-- 获取公开歌单列表 -->
+    <select id="selectPublicPlaylists" resultMap="PlaylistDTOResultMap">
+        SELECT
+            p.id, p.user_id as userId, p.name, p.description, p.is_public as isPublic,
+            p.created_at as createdAt, p.updated_at as updatedAt,
+            u.username as userName, u.avatar as userAvatar,
+            COALESCE(item_count.count, 0) as itemCount
+        FROM playlists p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN (
+            SELECT playlist_id, COUNT(*) as count
+            FROM playlist_items pi
+            JOIN radio_programs rp ON pi.program_id = rp.id
+            WHERE rp.status = 'published'
+            GROUP BY playlist_id
+        ) item_count ON p.id = item_count.playlist_id
+        WHERE p.is_public = 1 AND item_count.count > 0
+        ORDER BY p.created_at DESC
+    </select>
+
+    <!-- 搜索歌单 -->
+    <select id="searchPlaylists" resultMap="PlaylistDTOResultMap">
+        SELECT
+            p.id, p.user_id as userId, p.name, p.description, p.is_public as isPublic,
+            p.created_at as createdAt, p.updated_at as updatedAt,
+            u.username as userName, u.avatar as userAvatar,
+            COALESCE(item_count.count, 0) as itemCount
+        FROM playlists p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN (
+            SELECT playlist_id, COUNT(*) as count
+            FROM playlist_items pi
+            JOIN radio_programs rp ON pi.program_id = rp.id
+            WHERE rp.status = 'published'
+            GROUP BY playlist_id
+        ) item_count ON p.id = item_count.playlist_id
+        WHERE p.is_public = 1 AND item_count.count > 0
+        <if test="keyword != null and keyword != ''">
+            AND (
+                p.name LIKE CONCAT('%', #{keyword}, '%')
+                OR p.description LIKE CONCAT('%', #{keyword}, '%')
+                OR u.username LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        ORDER BY p.updated_at DESC, p.created_at DESC
+    </select>
+
+</mapper>

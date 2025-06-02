@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.sdtbu.edu.mapper.RadioProgramMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="RadioProgramDTOResultMap" type="cn.sdtbu.edu.dto.RadioProgramDTO">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="audioUrl" property="audioUrl"/>
+        <result column="coverImageUrl" property="coverImageUrl"/>
+        <result column="categoryId" property="categoryId"/>
+        <result column="categoryName" property="categoryName"/>
+        <result column="artistNarrator" property="artistNarrator"/>
+        <result column="album" property="album"/>
+        <result column="durationSeconds" property="durationSeconds"/>
+        <result column="tags" property="tags"/>
+        <result column="publicationDate" property="publicationDate"/>
+        <result column="playsCount" property="playsCount"/>
+        <result column="likesCount" property="likesCount"/>
+        <result column="commentsCount" property="commentsCount"/>
+        <result column="isFeatured" property="isFeatured"/>
+        <result column="status" property="status"/>
+        <result column="createdAt" property="createdAt"/>
+        <result column="updatedAt" property="updatedAt"/>
+        <result column="hotScore" property="hotScore"/>
+        <result column="hotRank" property="hotRank"/>
+    </resultMap>
+
+    <!-- 分页查询电台节目列表（带分类名称） -->
+    <select id="selectProgramsWithCategory" resultMap="RadioProgramDTOResultMap">
+        SELECT 
+            rp.id, rp.title, rp.description, rp.audio_url as audioUrl,
+            rp.cover_image_url as coverImageUrl, rp.category_id as categoryId,
+            c.name as categoryName, rp.artist_narrator as artistNarrator,
+            rp.album, rp.duration_seconds as durationSeconds, rp.tags,
+            rp.publication_date as publicationDate, rp.plays_count as playsCount,
+            rp.likes_count as likesCount, rp.comments_count as commentsCount,
+            rp.is_featured as isFeatured, rp.status,
+            rp.created_at as createdAt, rp.updated_at as updatedAt
+        FROM radio_programs rp
+        LEFT JOIN categories c ON rp.category_id = c.id
+        WHERE rp.status = 'published'
+        <if test="categoryId != null">
+            AND rp.category_id = #{categoryId}
+        </if>
+        <if test="tag != null and tag != ''">
+            AND FIND_IN_SET(#{tag}, rp.tags)
+        </if>
+        <choose>
+            <when test="sortBy == 'createdAt_desc'">
+                ORDER BY rp.created_at DESC
+            </when>
+            <when test="sortBy == 'playsCount_desc'">
+                ORDER BY rp.plays_count DESC
+            </when>
+            <when test="sortBy == 'likesCount_desc'">
+                ORDER BY rp.likes_count DESC
+            </when>
+            <when test="sortBy == 'isFeatured_desc_createdAt_desc'">
+                ORDER BY rp.is_featured DESC, rp.created_at DESC
+            </when>
+            <when test="sortBy == 'commentsCount_desc'">
+                ORDER BY rp.comments_count DESC
+            </when>
+            <otherwise>
+                ORDER BY rp.created_at DESC
+            </otherwise>
+        </choose>
+    </select>
+
+    <!-- 根据ID查询电台节目详情（带分类名称） -->
+    <select id="selectProgramDetailById" resultMap="RadioProgramDTOResultMap">
+        SELECT 
+            rp.id, rp.title, rp.description, rp.audio_url as audioUrl,
+            rp.cover_image_url as coverImageUrl, rp.category_id as categoryId,
+            c.name as categoryName, rp.artist_narrator as artistNarrator,
+            rp.album, rp.duration_seconds as durationSeconds, rp.tags,
+            rp.publication_date as publicationDate, rp.plays_count as playsCount,
+            rp.likes_count as likesCount, rp.comments_count as commentsCount,
+            rp.is_featured as isFeatured, rp.status,
+            rp.created_at as createdAt, rp.updated_at as updatedAt
+        FROM radio_programs rp
+        LEFT JOIN categories c ON rp.category_id = c.id
+        WHERE rp.id = #{programId} AND rp.status = 'published'
+    </select>
+
+    <!-- 增加播放次数 -->
+    <update id="incrementPlaysCount">
+        UPDATE radio_programs SET plays_count = plays_count + 1 WHERE id = #{programId}
+    </update>
+
+    <!-- 增加喜欢次数 -->
+    <update id="incrementLikesCount">
+        UPDATE radio_programs SET likes_count = likes_count + 1 WHERE id = #{programId}
+    </update>
+
+    <!-- 减少喜欢次数 -->
+    <update id="decrementLikesCount">
+        UPDATE radio_programs SET likes_count = likes_count - 1 WHERE id = #{programId} AND likes_count > 0
+    </update>
+
+    <!-- 增加评论次数 -->
+    <update id="incrementCommentsCount">
+        UPDATE radio_programs SET comments_count = comments_count + 1 WHERE id = #{programId}
+    </update>
+
+    <!-- 减少评论次数 -->
+    <update id="decrementCommentsCount">
+        UPDATE radio_programs SET comments_count = comments_count - 1 WHERE id = #{programId} AND comments_count > 0
+    </update>
+
+    <!-- 获取热门节目（按播放次数排序）- 旧版本，保留兼容性 -->
+    <select id="selectHotProgramsByPlays" resultMap="RadioProgramDTOResultMap">
+        SELECT
+            rp.id, rp.title, rp.cover_image_url as coverImageUrl,
+            rp.artist_narrator as artistNarrator, rp.plays_count as playsCount,
+            rp.likes_count as likesCount, c.name as categoryName
+        FROM radio_programs rp
+        LEFT JOIN categories c ON rp.category_id = c.id
+        WHERE rp.status = 'published'
+        ORDER BY rp.plays_count DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 获取精选节目 -->
+    <select id="selectFeaturedPrograms" resultMap="RadioProgramDTOResultMap">
+        SELECT
+            rp.id, rp.title, rp.cover_image_url as coverImageUrl,
+            rp.artist_narrator as artistNarrator, rp.plays_count as playsCount,
+            rp.likes_count as likesCount, c.name as categoryName
+        FROM radio_programs rp
+        LEFT JOIN categories c ON rp.category_id = c.id
+        WHERE rp.status = 'published' AND rp.is_featured = 1
+        ORDER BY rp.created_at DESC
+    </select>
+
+    <!-- 搜索节目 -->
+    <select id="searchPrograms" resultMap="RadioProgramDTOResultMap">
+        SELECT
+            rp.id, rp.title, rp.description, rp.audio_url as audioUrl,
+            rp.cover_image_url as coverImageUrl, rp.artist_narrator as artistNarrator,
+            rp.duration_seconds as durationSeconds, rp.plays_count as playsCount,
+            rp.likes_count as likesCount, rp.comments_count as commentsCount,
+            rp.tags, rp.is_featured as isFeatured, rp.status,
+            rp.created_at as createdAt, rp.updated_at as updatedAt,
+            c.name as categoryName
+        FROM radio_programs rp
+        LEFT JOIN categories c ON rp.category_id = c.id
+        WHERE rp.status = 'published'
+        <if test="keyword != null and keyword != ''">
+            AND (
+                rp.title LIKE CONCAT('%', #{keyword}, '%')
+                OR rp.description LIKE CONCAT('%', #{keyword}, '%')
+                OR rp.artist_narrator LIKE CONCAT('%', #{keyword}, '%')
+                OR rp.tags LIKE CONCAT('%', #{keyword}, '%')
+                OR c.name LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        ORDER BY rp.created_at DESC
+    </select>
+
+    <!-- 获取热门节目列表（按热门度分数排序） -->
+    <select id="selectHotPrograms" resultMap="RadioProgramDTOResultMap">
+        SELECT
+            rp.id, rp.title, rp.description, rp.audio_url as audioUrl,
+            rp.cover_image_url as coverImageUrl, rp.artist_narrator as artistNarrator,
+            rp.duration_seconds as durationSeconds, rp.plays_count as playsCount,
+            rp.likes_count as likesCount, rp.comments_count as commentsCount,
+            rp.tags, rp.is_featured as isFeatured, rp.status,
+            rp.created_at as createdAt, rp.updated_at as updatedAt,
+            c.name as categoryName,
+            (rp.likes_count * 3.0 + rp.comments_count * 5.0 + rp.plays_count * 1.0) as hotScore
+        FROM radio_programs rp
+        LEFT JOIN categories c ON rp.category_id = c.id
+        WHERE rp.status = 'published'
+        ORDER BY hotScore DESC, rp.created_at DESC
+    </select>
+
+    <!-- 获取热门节目列表（带排名） -->
+    <select id="selectHotProgramsWithRank" resultMap="RadioProgramDTOResultMap">
+        SELECT
+            ranked_programs.*,
+            @row_number := @row_number + 1 as hotRank
+        FROM (
+            SELECT
+                rp.id, rp.title, rp.description, rp.audio_url as audioUrl,
+                rp.cover_image_url as coverImageUrl, rp.artist_narrator as artistNarrator,
+                rp.duration_seconds as durationSeconds, rp.plays_count as playsCount,
+                rp.likes_count as likesCount, rp.comments_count as commentsCount,
+                rp.tags, rp.is_featured as isFeatured, rp.status,
+                rp.created_at as createdAt, rp.updated_at as updatedAt,
+                c.name as categoryName,
+                (rp.likes_count * 3.0 + rp.comments_count * 5.0 + rp.plays_count * 1.0) as hotScore
+            FROM radio_programs rp
+            LEFT JOIN categories c ON rp.category_id = c.id
+            WHERE rp.status = 'published'
+            ORDER BY hotScore DESC, rp.created_at DESC
+            LIMIT #{page.size} OFFSET #{page.offset}
+        ) ranked_programs
+        CROSS JOIN (SELECT @row_number := #{page.offset}) r
+        ORDER BY hotScore DESC
+    </select>
+
+</mapper>

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.sdtbu.edu.mapper.CommentMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="CommentDTOResultMap" type="cn.sdtbu.edu.dto.CommentDTO">
+        <id column="id" property="id"/>
+        <result column="programId" property="programId"/>
+        <result column="userId" property="userId"/>
+        <result column="content" property="content"/>
+        <result column="createdAt" property="createdAt"/>
+        <result column="updatedAt" property="updatedAt"/>
+        <result column="userName" property="userName"/>
+        <result column="userEmail" property="userEmail"/>
+        <result column="userAvatar" property="userAvatar"/>
+        <result column="programTitle" property="programTitle"/>
+        <result column="parentCommentId" property="parentCommentId"/>
+        <result column="parentUserId" property="parentUserId"/>
+        <result column="parentUserName" property="parentUserName"/>
+        <result column="replyCount" property="replyCount"/>
+    </resultMap>
+
+    <!-- 获取节目评论列表 -->
+    <select id="selectCommentsByProgramId" resultMap="CommentDTOResultMap">
+        SELECT 
+            c.id, c.program_id as programId, c.user_id as userId, c.content,
+            c.created_at as createdAt, c.updated_at as updatedAt,
+            u.username as userName, u.avatar as userAvatar
+        FROM comments c
+        JOIN users u ON c.user_id = u.id
+        WHERE c.program_id = #{programId}
+        ORDER BY c.created_at DESC
+    </select>
+
+    <!-- 获取评论详情 -->
+    <select id="selectCommentDetailById" resultMap="CommentDTOResultMap">
+        SELECT 
+            c.id, c.program_id as programId, c.user_id as userId, c.content,
+            c.created_at as createdAt, c.updated_at as updatedAt,
+            u.username as userName, u.avatar as userAvatar
+        FROM comments c
+        JOIN users u ON c.user_id = u.id
+        WHERE c.id = #{commentId}
+    </select>
+
+    <!-- 检查评论是否存在 -->
+    <select id="checkCommentExists" resultType="int">
+        SELECT COUNT(*) FROM comments WHERE id = #{commentId}
+    </select>
+
+    <!-- 检查评论是否属于指定节目 -->
+    <select id="checkCommentInProgram" resultType="int">
+        SELECT COUNT(*) FROM comments WHERE id = #{commentId} AND program_id = #{programId}
+    </select>
+
+    <!-- 分页获取节目的评论列表（只获取顶级评论，不包含回复） -->
+    <select id="selectProgramComments" resultMap="CommentDTOResultMap">
+        SELECT
+            c.id, c.user_id as userId, u.username as userName, u.email as userEmail,
+            u.avatar as userAvatar, c.program_id as programId, rp.title as programTitle,
+            c.parent_comment_id as parentCommentId,
+            c.content, c.created_at as createdAt, c.updated_at as updatedAt,
+            (SELECT COUNT(*) FROM comments WHERE parent_comment_id = c.id) as replyCount
+        FROM comments c
+        JOIN users u ON c.user_id = u.id
+        JOIN radio_programs rp ON c.program_id = rp.id
+        WHERE c.program_id = #{programId} AND c.parent_comment_id IS NULL
+        ORDER BY c.created_at DESC
+    </select>
+
+    <!-- 获取评论的回复列表 -->
+    <select id="selectCommentReplies" resultMap="CommentDTOResultMap">
+        SELECT
+            c.id, c.user_id as userId, u.username as userName, u.email as userEmail,
+            u.avatar as userAvatar, c.program_id as programId, rp.title as programTitle,
+            c.parent_comment_id as parentCommentId,
+            pc.user_id as parentUserId, pu.username as parentUserName,
+            c.content, c.created_at as createdAt, c.updated_at as updatedAt
+        FROM comments c
+        JOIN users u ON c.user_id = u.id
+        JOIN radio_programs rp ON c.program_id = rp.id
+        LEFT JOIN comments pc ON c.parent_comment_id = pc.id
+        LEFT JOIN users pu ON pc.user_id = pu.id
+        WHERE c.parent_comment_id = #{parentCommentId}
+        ORDER BY c.created_at ASC
+    </select>
+
+    <!-- 获取用户的评论列表 -->
+    <select id="selectUserComments" resultMap="CommentDTOResultMap">
+        SELECT
+            c.id, c.user_id as userId, u.username as userName, u.avatar as userAvatar,
+            c.program_id as programId, rp.title as programTitle,
+            c.parent_comment_id as parentCommentId,
+            c.content, c.created_at as createdAt
+        FROM comments c
+        JOIN users u ON c.user_id = u.id
+        JOIN radio_programs rp ON c.program_id = rp.id
+        WHERE c.user_id = #{userId}
+        ORDER BY c.created_at DESC
+    </select>
+
+    <!-- 获取节目的评论总数（包含回复） -->
+    <select id="countProgramComments" resultType="int">
+        SELECT COUNT(*) FROM comments WHERE program_id = #{programId}
+    </select>
+
+</mapper>

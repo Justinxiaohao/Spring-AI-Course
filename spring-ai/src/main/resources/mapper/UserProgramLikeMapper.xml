@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.sdtbu.edu.mapper.UserProgramLikeMapper">
+
+    <!-- 检查用户是否已经喜欢某个节目 -->
+    <select id="checkUserLikeExists" resultType="int">
+        SELECT COUNT(*) FROM user_program_likes WHERE user_id = #{userId} AND program_id = #{programId}
+    </select>
+
+    <!-- 添加用户喜欢记录 -->
+    <insert id="insertUserLike">
+        INSERT INTO user_program_likes (user_id, program_id, created_at) VALUES (#{userId}, #{programId}, NOW())
+    </insert>
+
+    <!-- 删除用户喜欢记录 -->
+    <delete id="deleteUserLike">
+        DELETE FROM user_program_likes WHERE user_id = #{userId} AND program_id = #{programId}
+    </delete>
+
+    <!-- 获取用户喜欢的节目数量 -->
+    <select id="countUserLikes" resultType="int">
+        SELECT COUNT(*) FROM user_program_likes WHERE user_id = #{userId}
+    </select>
+
+</mapper>

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.sdtbu.edu.mapper.UserMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="RadioProgramDTOResultMap" type="cn.sdtbu.edu.dto.RadioProgramDTO">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="audioUrl" property="audioUrl"/>
+        <result column="coverImageUrl" property="coverImageUrl"/>
+        <result column="categoryId" property="categoryId"/>
+        <result column="categoryName" property="categoryName"/>
+        <result column="artistNarrator" property="artistNarrator"/>
+        <result column="album" property="album"/>
+        <result column="durationSeconds" property="durationSeconds"/>
+        <result column="tags" property="tags"/>
+        <result column="publicationDate" property="publicationDate"/>
+        <result column="playsCount" property="playsCount"/>
+        <result column="likesCount" property="likesCount"/>
+        <result column="commentsCount" property="commentsCount"/>
+        <result column="isFeatured" property="isFeatured"/>
+        <result column="status" property="status"/>
+        <result column="createdAt" property="createdAt"/>
+        <result column="updatedAt" property="updatedAt"/>
+        <result column="likedAt" property="likedAt"/>
+    </resultMap>
+
+    <!-- 用户个人资料结果映射 -->
+    <resultMap id="UserProfileDTOResultMap" type="cn.sdtbu.edu.dto.UserProfileDTO">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="email" property="email"/>
+        <result column="avatar" property="avatar"/>
+        <result column="bio" property="bio"/>
+        <result column="createdAt" property="createdAt"/>
+        <result column="likedProgramsCount" property="likedProgramsCount"/>
+        <result column="playlistsCount" property="playlistsCount"/>
+        <result column="commentsCount" property="commentsCount"/>
+    </resultMap>
+
+    <!-- 根据邮箱查找用户 -->
+    <select id="findByEmail" resultType="cn.sdtbu.edu.entity.User">
+        SELECT * FROM users WHERE email = #{email}
+    </select>
+
+    <!-- 根据用户名查找用户 -->
+    <select id="findByUsername" resultType="cn.sdtbu.edu.entity.User">
+        SELECT * FROM users WHERE username = #{username}
+    </select>
+
+    <!-- 获取用户喜欢的节目列表 -->
+    <select id="selectUserLikedPrograms" resultMap="RadioProgramDTOResultMap">
+        SELECT 
+            rp.id, rp.title, rp.description, rp.audio_url as audioUrl,
+            rp.cover_image_url as coverImageUrl, rp.category_id as categoryId,
+            c.name as categoryName, rp.artist_narrator as artistNarrator,
+            rp.album, rp.duration_seconds as durationSeconds, rp.tags,
+            rp.publication_date as publicationDate, rp.plays_count as playsCount,
+            rp.likes_count as likesCount, rp.comments_count as commentsCount,
+            rp.is_featured as isFeatured, rp.status,
+            rp.created_at as createdAt, rp.updated_at as updatedAt
+        FROM user_program_likes upl
+        JOIN radio_programs rp ON upl.program_id = rp.id
+        LEFT JOIN categories c ON rp.category_id = c.id
+        WHERE upl.user_id = #{userId} AND rp.status = 'published'
+        ORDER BY upl.created_at DESC
+    </select>
+
+    <!-- 检查用户名是否已存在（排除当前用户） -->
+    <select id="checkUsernameExists" resultType="int">
+        SELECT COUNT(*) FROM users
+        WHERE username = #{username}
+        <if test="excludeUserId != null">
+            AND id != #{excludeUserId}
+        </if>
+    </select>
+
+    <!-- 检查邮箱是否已存在（排除当前用户） -->
+    <select id="checkEmailExists" resultType="int">
+        SELECT COUNT(*) FROM users
+        WHERE email = #{email}
+        <if test="excludeUserId != null">
+            AND id != #{excludeUserId}
+        </if>
+    </select>
+
+    <!-- 根据ID获取用户个人资料（包含统计信息） -->
+    <select id="selectUserProfile" resultMap="UserProfileDTOResultMap">
+        SELECT
+            u.id, u.username, u.email, u.avatar, u.bio, u.created_at as createdAt,
+            COALESCE(likes_count.count, 0) as likedProgramsCount,
+            COALESCE(playlists_count.count, 0) as playlistsCount,
+            COALESCE(comments_count.count, 0) as commentsCount
+        FROM users u
+        LEFT JOIN (
+            SELECT user_id, COUNT(*) as count
+            FROM user_program_likes
+            GROUP BY user_id
+        ) likes_count ON u.id = likes_count.user_id
+        LEFT JOIN (
+            SELECT user_id, COUNT(*) as count
+            FROM playlists
+            GROUP BY user_id
+        ) playlists_count ON u.id = playlists_count.user_id
+        LEFT JOIN (
+            SELECT user_id, COUNT(*) as count
+            FROM comments
+            GROUP BY user_id
+        ) comments_count ON u.id = comments_count.user_id
+        WHERE u.id = #{userId}
+    </select>
+
+</mapper>

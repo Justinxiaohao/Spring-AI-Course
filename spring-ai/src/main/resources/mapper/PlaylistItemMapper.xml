@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.sdtbu.edu.mapper.PlaylistItemMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="PlaylistItemDTOResultMap" type="cn.sdtbu.edu.dto.PlaylistItemDTO">
+        <id column="id" property="id"/>
+        <result column="playlistId" property="playlistId"/>
+        <result column="programId" property="programId"/>
+        <result column="displayOrder" property="displayOrder"/>
+        <result column="addedAt" property="addedAt"/>
+        <result column="programTitle" property="programTitle"/>
+        <result column="programCoverImageUrl" property="programCoverImageUrl"/>
+        <result column="programArtistNarrator" property="programArtistNarrator"/>
+        <result column="programDurationSeconds" property="programDurationSeconds"/>
+    </resultMap>
+
+    <!-- 获取歌单内的节目列表（带节目信息） -->
+    <select id="selectPlaylistItems" resultMap="PlaylistItemDTOResultMap">
+        SELECT 
+            pi.id, pi.playlist_id as playlistId, pi.program_id as programId,
+            pi.display_order as displayOrder, pi.added_at as addedAt,
+            rp.title as programTitle, rp.cover_image_url as programCoverImageUrl,
+            rp.artist_narrator as programArtistNarrator, rp.duration_seconds as programDurationSeconds
+        FROM playlist_items pi
+        JOIN radio_programs rp ON pi.program_id = rp.id
+        WHERE pi.playlist_id = #{playlistId} AND rp.status = 'published'
+        ORDER BY pi.display_order ASC, pi.added_at ASC
+    </select>
+
+    <!-- 检查节目是否已在歌单中 -->
+    <select id="checkProgramInPlaylist" resultType="int">
+        SELECT COUNT(*) FROM playlist_items WHERE playlist_id = #{playlistId} AND program_id = #{programId}
+    </select>
+
+    <!-- 获取歌单中的最大显示顺序 -->
+    <select id="getMaxDisplayOrder" resultType="int">
+        SELECT COALESCE(MAX(display_order), 0) FROM playlist_items WHERE playlist_id = #{playlistId}
+    </select>
+
+    <!-- 检查歌单项是否属于指定歌单 -->
+    <select id="checkItemInPlaylist" resultType="int">
+        SELECT COUNT(*) FROM playlist_items WHERE id = #{itemId} AND playlist_id = #{playlistId}
+    </select>
+
+    <!-- 批量更新歌单项的显示顺序 -->
+    <update id="updateDisplayOrder">
+        UPDATE playlist_items SET display_order = #{displayOrder} WHERE id = #{itemId}
+    </update>
+
+    <!-- 根据歌单ID删除所有歌单项 -->
+    <delete id="deleteByPlaylistId">
+        DELETE FROM playlist_items WHERE playlist_id = #{playlistId}
+    </delete>
+
+    <!-- 获取歌单项详情 -->
+    <select id="selectItemDetailById" resultMap="PlaylistItemDTOResultMap">
+        SELECT 
+            pi.id, pi.playlist_id as playlistId, pi.program_id as programId,
+            pi.display_order as displayOrder, pi.added_at as addedAt,
+            rp.title as programTitle, rp.cover_image_url as programCoverImageUrl,
+            rp.artist_narrator as programArtistNarrator, rp.duration_seconds as programDurationSeconds
+        FROM playlist_items pi
+        JOIN radio_programs rp ON pi.program_id = rp.id
+        WHERE pi.id = #{itemId}
+    </select>
+
+</mapper>
